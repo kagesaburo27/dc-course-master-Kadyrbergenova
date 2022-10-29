@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * Processor of HTTP request.
  */
-public class Processor {
+public class Processor extends Thread{
     private final Socket socket;
     private final HttpRequest request;
 
@@ -21,18 +21,29 @@ public class Processor {
         this.request = request;
     }
 
+    @Override
+    public void run() {
+        try {
+            process();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void process() throws IOException {
         if (request.getRequestLine().contains("/create")) {
             create();
+            socket.close();
         } else if (request.getRequestLine().contains("/delete")) {
           delete();
+            socket.close();
         } else if (request.getRequestLine().contains("/exec")) {
           exec();
+            socket.close();
         } else {
             // Print request that we received.
-            System.out.println("Got request:");
-            System.out.println(request.toString());
-            System.out.flush();
+//            System.out.println("Got request:");
+//            System.out.println(request.toString());
+//            System.out.flush();
 
 
             // To send response back to the client.
@@ -48,7 +59,6 @@ public class Processor {
             output.println("</html>");
             output.flush();
 
-            socket.close();
         }
     }
     public void create() throws IOException {
@@ -64,14 +74,12 @@ public class Processor {
         output.println("<body><p>Hello, world!</p>");
 
         output.println(num);
-        output.println(list);
 
         output.println("</html>");
         output.flush();
-        socket.close();
     }
     public void delete() throws IOException {
-        int i = rand.nextInt(list.size()-1);
+        int i = rand.nextInt(list.size());
         list.remove(i);
         PrintWriter output = new PrintWriter(socket.getOutputStream());
         // We are returning a simple web page now.
@@ -83,11 +91,9 @@ public class Processor {
         output.println("<body><p>Hello, world!</p>");
 
         output.println(i);
-        output.println(list);
 
         output.println("</html>");
         output.flush();
-        socket.close();
     }
     public void exec() throws IOException {
         int N = 500000;
@@ -128,7 +134,6 @@ public class Processor {
 
         output.println("</html>");
         output.flush();
-        socket.close();
     }
 
 }
